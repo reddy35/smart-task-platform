@@ -1,0 +1,17 @@
+[
+  {
+    "model": "tasks.task",
+    "pk": 1,
+    "fields": {
+      "title": "Prepare sprint report",
+      "description": "Summarize progress for the last sprint",
+      "assignee_email": "teamlead@example.com",
+      "status": "pending",
+      "priority": 2,
+      "due_at": "2025-11-30T12:00:00Z",
+      "reminder_at": "2025-11-30T09:00:00Z",
+      "created_at": "2025-11-25T10:00:00Z",
+      "updated_at": "2025-11-25T10:00:00Z"
+    }
+  }
+]

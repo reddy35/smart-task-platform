@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: smart_tasks
+      POSTGRES_USER: smartuser
+      POSTGRES_PASSWORD: smartpass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+  django:
+    build: ./backend
+    command: gunicorn smart_tasks.wsgi:application --bind 0.0.0.0:8000
+    environment:
+      POSTGRES_DB: smart_tasks
+      POSTGRES_USER: smartuser
+      POSTGRES_PASSWORD: smartpass
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      NOTIFICATION_SERVICE_URL: http://flask-service:5001
+    depends_on:
+      - db
+      - redis
+
+  celery-worker:
+    build: ./backend
+    command: celery -A smart_tasks worker -l info
+    environment:
+      POSTGRES_DB: smart_tasks
+      POSTGRES_USER: smartuser
+      POSTGRES_PASSWORD: smartpass
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      NOTIFICATION_SERVICE_URL: http://flask-service:5001
+    depends_on:
+      - django
+      - redis
+      - flask-service
+
+  flask-service:
+    build: ./flask_service
+    environment:
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: your@gmail.com
+      SMTP_PASSWORD: yourpassword
+      SMTP_FROM: your@gmail.com
+
+  frontend:
+    build: ./frontend
+    command: ["npm", "start"]
+    environment:
+      REACT_APP_API_BASE: http://localhost/api
+    depends_on:
+      - django
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+      - frontend
+
+volumes:
+  postgres_data:
